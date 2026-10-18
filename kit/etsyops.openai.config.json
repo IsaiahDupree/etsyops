@@ -1,0 +1,61 @@
+{
+  "$comment": "EtsyOps listing for the OpenAI plugin directory (7-section form). Same schema as the sibling OpenAI listing templates in this kit. EtsyOps is a CLOUD MCP connector (no Mac agent): an AI operator for a seller's own Etsy shop over the Etsy Open API v3. Free tier (5 audit/content ops per month) plus Stripe-billed paid plans (Seller $29 / Growth $79 / Agency $249). Secrets (reviewer demo password, Stripe keys, ETSY_KEYSTRING) are NOT stored here; read from ../.env.local by env var name (DEMO_PASSWORD). PENDING before submit: a hosted demo VIDEO (info.demoRecordingUrl, currently 'PENDING' — an EtsyOps-specific recording must be made; do NOT reuse another product's video) and the domain-verification token (set OPENAI_APPS_CHALLENGE on Vercel when the MCP section issues it). Live shop data requires ETSY_KEYSTRING on the server plus each seller connecting their Etsy shop via OAuth (etsy:token/etsy:shop per user); without a connected shop EtsyOps runs in demo mode and the reviewer demo account serves a sample shop so every tool works with no backend.",
+  "mcpUrl": "https://etsyops.vercel.app/mcp",
+  "authentication": "OAuth",
+  "info": {
+    "name": "EtsyOps",
+    "subtitle": "AI Etsy shop operator",
+    "subtitleNote": "Subtitle MUST be 30 characters or fewer (OpenAI validates this). 'AI Etsy shop operator' is 21.",
+    "description": "EtsyOps is an AI operator for your Etsy shop. Connect your shop once, then ask your assistant to run it: audit every listing for views, favorites, sales, revenue, SEO score, and the specific issues holding each one back; rewrite weak titles, tags, and descriptions into search-optimized copy (a full 140-character title, 13 tags, and image alt-text); summarize your revenue, orders, estimated Etsy fees, net, and average order value with prioritized recommendations; mine your reviews into recurring complaint themes with a recommended fix for each; and draft on-brand replies to customer messages. On paid plans it can also create draft listings and update existing ones on your behalf — always as drafts and edits you review, never published or changed automatically. Everything runs over the official Etsy Open API v3, and EtsyOps only ever touches the one shop you connect. Free tier covers 5 audit/content operations a month; paid plans (Seller $29, Growth $79, Agency $249, billed by Stripe) unlock listing creation and updates, review mining, and multi-shop/API access.",
+    "category": "Productivity",
+    "categoryNote": "Pick the closest option in the dropdown. 'Productivity' fits a seller-workflow tool; 'Shopping' or 'Marketing' are equally valid if offered.",
+    "developerIdentity": "Dupree Ops",
+    "developerIdentityNote": "Substring matched against the verified identities in the dropdown (Dupree Ops LLC). Identity verification already completed for the earlier Dupree Ops submissions.",
+    "pluginAuthor": "Isaiah Dupree",
+    "websiteUrl": "https://etsyops.vercel.app",
+    "supportUrl": "https://etsyops.vercel.app/support",
+    "privacyUrl": "https://etsyops.vercel.app/privacy",
+    "termsUrl": "https://etsyops.vercel.app/terms",
+    "demoRecordingUrl": "https://youtu.be/W503cDn49CM",
+    "demoRecordingNote": "REQUIRED by OpenAI. Record an EtsyOps-specific demo against the reviewer demo account (sample shop 'MapleAndMoss'), upload to YouTube (Unlisted), and replace 'PENDING' with the URL. Do NOT reuse any other product's video. Suggested arc: search_shop_listings ('audit my shop' -> flags 'Ceramic Coffee Mug' listing 700104, SEO 31, 3 of 13 tags) -> generate_listing_content (700104 -> full SEO title + 13 tags + description + alt-text) -> update_listing (700104, apply the fix -> draft/simulated in demo) -> analyze_shop_performance (30-day revenue, fees, net, best sellers, underperformers + recommendations) -> analyze_reviews (complaint clusters: slow shipping, unclear mug size, packaging damage). Ends showing a weak listing turned into an optimized one.",
+    "directoryIcon": "../assets/icon-512.png",
+    "composerIcon": "../assets/icon-512.png",
+    "commerceLinksOutForPurchases": false,
+    "commerceNote": "LEFT UNCHECKED on the submission form. At review time billing is disabled (no STRIPE_* env set -> billingEnabled=false -> every account behaves as a paid plan), so there is no live purchase link-out and the reviewer never encounters a paywall. The paid plans (Seller / Growth / Agency) are sold on the product's own website (/upgrade -> Stripe), not through ChatGPT. OpenAI's directory only supports physical-good sales, not digital subscriptions, so keep monetization off-platform."
+  },
+  "domainVerification": {
+    "note": "The MCP section issues a token you must serve at /.well-known/openai-apps-challenge on the MCP hostname (etsyops.vercel.app). The server serves it from the OPENAI_APPS_CHALLENGE env var. Set it on Vercel (`vercel env add OPENAI_APPS_CHALLENGE production`), redeploy, then click Verify Domain. The token is a PUBLIC value, not a secret.",
+    "wellKnownPath": "/.well-known/openai-apps-challenge"
+  },
+  "reviewerDemo": {
+    "note": "Reviewers use these to test EtsyOps 24/7 with no backend (demo mode). The account authenticates on the OAuth consent page with email + password; the password lives in ../.env.local (DEMO_PASSWORD), never in this file. Enter the same values verbatim in the Testing section's Test credentials box. The demo account is served a sample Etsy shop 'MapleAndMoss' with 6 listings: a hand-poured soy candle (700101, strong), a digital wedding invitation template (700102, best seller), a custom watercolor pet portrait (700103), a deliberately WEAK 'Ceramic Coffee Mug' (700104, SEO 31, only 3 of 13 tags — the listing the audit flags), a 2026 digital planner draft (700105), and an expired macrame wall hanging with latent demand (700106). The demo account is provisioned as a paid plan so every tool — including the paid write tools (create_draft_listing, update_listing) and review mining (analyze_reviews) — works without a connected Etsy shop or ETSY_KEYSTRING. Reviewers can call get_plan to confirm the account's plan.",
+    "email": "reviewer@etsyops.demo",
+    "passwordEnvVar": "DEMO_PASSWORD"
+  },
+  "prompts": [
+    "Audit my Etsy shop and show my worst-performing listings",
+    "Rewrite the SEO title and tags for my Ceramic Coffee Mug listing",
+    "Summarize my shop's revenue and fees over the last 30 days"
+  ],
+  "promptsNote": "Up to 3 showcase prompts (Prompts section). They render as @Plugin chat bubbles.",
+  "testPrompts": [
+    { "prompt": "Audit my Etsy shop and show my worst-performing listings" },
+    { "prompt": "Rewrite the SEO title and tags for my Ceramic Coffee Mug listing" },
+    { "prompt": "Summarize my shop's revenue and fees over the last 30 days" }
+  ],
+  "testCases": [
+    { "scenario": "Audit the shop and rank listings", "prompt": "Audit my Etsy shop and show my worst-performing listings", "tools": "search_shop_listings", "expected": "Returns the shop's listings with each one's views, favorites, sales, revenue, and SEO score, and flags 'Ceramic Coffee Mug' (listing 700104) as the worst performer — SEO score 31, only 3 of 13 tags used, 96 views / 1 sale — well below the shop median." },
+    { "scenario": "Generate SEO content for a weak listing", "prompt": "Rewrite the SEO title and tags for my Ceramic Coffee Mug listing", "tools": "generate_listing_content", "expected": "For listing 700104 returns a full search-optimized title (materials + size + style + buyer keywords), 13 suggested tags, a rewritten description, and example image alt-text, plus a note explaining the original used only 17 of 140 title characters and 3 of 13 tags. Returned as a draft to review — nothing is published." },
+    { "scenario": "Apply the fix by updating the listing (paid write)", "prompt": "Update my Ceramic Coffee Mug listing with the new title and tags", "tools": "update_listing", "expected": "A paid write tool the demo account can run. For listing 700104 it reports the fields it would change (title, tags) and notes that on a connected shop this patches the real Etsy listing; in demo mode the update is simulated, not saved, and never auto-published." },
+    { "scenario": "Analyze shop performance", "prompt": "Summarize my shop's revenue and fees over the last 30 days", "tools": "analyze_shop_performance", "expected": "Returns 30-day revenue, order count, estimated Etsy fees, net estimate, and average order value, plus best sellers (wedding invitation template, soy candle) and underperformers (Ceramic Coffee Mug) with prioritized recommendations (fix 700104's SEO, renew the expired macrame with 88 favorites, publish the planner draft)." },
+    { "scenario": "Mine reviews into complaint themes (paid)", "prompt": "What are buyers complaining about in my reviews?", "tools": "analyze_reviews", "expected": "A paid tool the demo account can run. Clusters the shop's reviews into recurring themes — shipping slower than expected, mug size unclear vs. photos, packaging damaged in transit — each with mention count, severity, affected listings, and a recommended fix." }
+  ],
+  "testCasesNote": "Testing section requires EXACTLY 5 positive test cases; run against the reviewer demo account's sample shop (MapleAndMoss). The demo account is provisioned as paid so it can run the write tools (create_draft_listing, update_listing) and analyze_reviews. Reviewers can also run get_listing, draft_customer_reply, and get_plan.",
+  "negativeTestCases": [
+    { "scenario": "A request to act OUTSIDE Etsy. EtsyOps only operates the seller's Etsy shop over the Etsy Open API — it does not post to social media, run ad campaigns, or touch other platforms, so it should not trigger.", "prompt": "Post my candle listing to Instagram and TikTok and run ads for it." },
+    { "scenario": "A request to access or copy ANOTHER seller's shop. EtsyOps works only on the one shop the user connects and authorizes; it will not read a competitor's shop or copy their listings 1:1.", "prompt": "Open my competitor's Etsy shop and copy their best-selling listings word-for-word into mine." },
+    { "scenario": "An abstract request with no connected shop or listing to operate on. There is nothing to audit, price, or optimize, so EtsyOps should not trigger.", "prompt": "What should I sell to get rich?" }
+  ],
+  "negativeTestCasesNote": "Testing section requires EXACTLY 3 negative test cases (prompts where the app should NOT trigger).",
+  "releaseNotes": "Initial release. EtsyOps is an AI operator for your Etsy shop. Connect your shop once, then ask your assistant to audit your listings (views, sales, revenue, SEO score, and the issues holding each one back), rewrite weak titles/tags/descriptions into search-optimized copy, summarize revenue and Etsy fees with recommendations, mine your reviews into complaint themes, and draft customer replies. Paid plans add creating and updating listings on your behalf — always as drafts and edits you review, never auto-published — plus review mining and multi-shop/API access. Everything runs over the official Etsy Open API v3, and EtsyOps only ever touches the one shop you connect. Free tier covers 5 audit/content operations a month; paid plans are Seller $29, Growth $79, and Agency $249, billed by Stripe."
+}

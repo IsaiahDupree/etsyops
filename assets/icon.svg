@@ -1,0 +1,56 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1f28"/>
+      <stop offset="1" stop-color="#0d0f14"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#f5b942" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#f5b942" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd375"/>
+      <stop offset="1" stop-color="#f5b942"/>
+    </linearGradient>
+    <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f5b942" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#f5b942" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="dish"><circle cx="256" cy="256" r="150"/></clipPath>
+  </defs>
+
+  <!-- tile -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#tile)"/>
+  <rect x="16.5" y="16.5" width="479" height="479" rx="107.5" fill="none" stroke="#f5b942" stroke-opacity="0.16" stroke-width="1"/>
+  <circle cx="256" cy="256" r="180" fill="url(#glow)"/>
+
+  <!-- radar dish: rings + crosshairs -->
+  <g fill="none" stroke="url(#gold)" stroke-opacity="0.5" stroke-width="4">
+    <circle cx="256" cy="256" r="150"/>
+    <circle cx="256" cy="256" r="102" stroke-opacity="0.4"/>
+    <circle cx="256" cy="256" r="54" stroke-opacity="0.32"/>
+  </g>
+  <g stroke="#f5b942" stroke-opacity="0.28" stroke-width="3">
+    <path d="M256 106 L256 406"/>
+    <path d="M106 256 L406 256"/>
+  </g>
+
+  <!-- sweep wedge pointing up-right toward the blip -->
+  <g clip-path="url(#dish)">
+    <path d="M256 256 L256 96 A160 160 0 0 1 396 176 Z" fill="url(#sweep)"/>
+  </g>
+  <path d="M256 256 L372 168" stroke="url(#gold)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- the found gap: a bright green blip with a pulse ring on an outer ring -->
+  <circle cx="340" cy="196" r="30" fill="none" stroke="#4ade80" stroke-opacity="0.45" stroke-width="4"/>
+  <circle cx="340" cy="196" r="16" fill="#4ade80"/>
+  <circle cx="340" cy="196" r="6" fill="#0d0f14" fill-opacity="0.85"/>
+
+  <!-- center hub -->
+  <circle cx="256" cy="256" r="12" fill="url(#gold)"/>
+  <circle cx="256" cy="256" r="5" fill="#fff4dc" fill-opacity="0.9"/>
+
+  <!-- dim non-target blips for texture -->
+  <circle cx="196" cy="320" r="7" fill="#f5b942" fill-opacity="0.4"/>
+  <circle cx="300" cy="330" r="6" fill="#f5b942" fill-opacity="0.3"/>
+</svg>

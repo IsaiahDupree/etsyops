@@ -1,0 +1,7 @@
+# EtsyOps — security contact (Dupree Ops LLC)
+Contact: mailto:isaiahdupree33@gmail.com
+Contact: https://github.com/IsaiahDupree/etsyops/security/advisories/new
+Policy: https://github.com/IsaiahDupree/etsyops/blob/main/SECURITY.md
+Canonical: https://etsyops.vercel.app/.well-known/security.txt
+Preferred-Languages: en
+Expires: 2027-07-17T00:00:00.000Z

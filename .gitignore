@@ -1,0 +1,23 @@
+# secrets — never commit
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# vercel
+.vercel
+
+# deps
+node_modules/
+
+# logs / runtime
+*.log
+logs/
+kit/screenshots/*.png
+!kit/screenshots/.gitkeep
+
+# os
+.DS_Store
+
+# (no Mac agent for EtsyOps — it's a cloud-only MCP connector)

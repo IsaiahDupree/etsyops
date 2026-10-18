@@ -1,0 +1,213 @@
+#!/usr/bin/env node
+// record-demo.mjs — records a demo of EtsyOps working in ChatGPT.
+// Connects to the agent Chrome (CDP :9222), opens a fresh chat, runs a scripted
+// arc of prompts against the connector, screenshot-loops the page, and encodes
+// the frames to an mp4 with ffmpeg. The connector must already be registered +
+// OAuth'd (as the demo account) in this Chrome profile.
+//
+//   node record-demo.mjs
+//
+// Output: $OUT (default ./etsyops-demo.mp4)
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import puppeteer from 'puppeteer-core';
+
+const CDP = 'http://127.0.0.1:9222';
+const FRAME_DIR = process.env.FRAME_DIR || '/Users/isaiahdupree/.claude/jobs/c76af6d7/tmp/frames';
+const OUT = process.env.OUT || path.join(process.cwd(), 'etsyops-demo.mp4');
+const FPS = 4;                    // capture + playback rate (real-time)
+const INTERVAL = Math.round(1000 / FPS);
+
+// The demo arc. Each names the connector so the tool call routes reliably
+// (reviewers can attach it via the + menu instead). Audit the shop, fix the weak
+// listing, apply the update, then analyze performance and reviews.
+const PROMPTS = [
+  'Using EtsyOps, audit my Etsy shop and show my worst-performing listings.',
+  'Using EtsyOps, rewrite the SEO title and tags for my Ceramic Coffee Mug listing.',
+  'Using EtsyOps, update my Ceramic Coffee Mug listing with the new title and tags.',
+  "Using EtsyOps, summarize my shop's revenue and fees over the last 30 days.",
+  'Using EtsyOps, what are buyers complaining about in my reviews?',
+];
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const log = (m) => console.log(`[rec ${new Date().toTimeString().slice(0, 8)}] ${m}`);
+
+async function getChatPage(browser) {
+  const pages = await browser.pages();
+  let page = pages.find((p) => (p.url() || '').includes('chatgpt.com'));
+  if (!page) { page = await browser.newPage(); }
+  await page.bringToFront().catch(() => {});
+  // Fresh chat.
+  await page.goto('https://chatgpt.com/', { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+  await page.waitForSelector('#prompt-textarea, form [contenteditable="true"]', { timeout: 30000 }).catch(() => {});
+  await sleep(1500);
+  await collapseSidebar(page);
+  return page;
+}
+
+// Collapse the left sidebar so the recording never shows the user's private
+// chat/project names. Best-effort across ChatGPT's selector variants.
+async function collapseSidebar(page) {
+  const closed = await page.evaluate(() => {
+    const sels = [
+      'button[data-testid="close-sidebar-button"]',
+      'button[aria-label="Close sidebar"]',
+      'button[aria-label="Close sidebar panel"]',
+      'button[aria-label*="lose sidebar"]',
+    ];
+    for (const s of sels) { const b = document.querySelector(s); if (b && b.offsetParent !== null) { b.click(); return s; } }
+    // Fallback: a toggle button near the top-left that controls the nav.
+    const t = [...document.querySelectorAll('button')].find((b) => /sidebar/i.test(b.getAttribute('aria-label') || '') && b.offsetParent !== null);
+    if (t) { t.click(); return 'aria-sidebar'; }
+    return null;
+  }).catch(() => null);
+  log(`sidebar collapse: ${closed || 'not found'}`);
+  await sleep(1500);
+}
+
+// Click a button/element whose visible text matches any of `texts` (best-effort).
+async function clickIfPresent(page, texts) {
+  return page.evaluate((texts) => {
+    const els = [...document.querySelectorAll('button, [role="button"], a')];
+    for (const t of texts) {
+      const el = els.find((e) => (e.innerText || e.textContent || '').trim().toLowerCase().includes(t.toLowerCase()) && e.offsetParent !== null);
+      if (el) { el.click(); return t; }
+    }
+    return null;
+  }, texts).catch(() => null);
+}
+
+const countRole = (page, role) =>
+  page.evaluate((r) => document.querySelectorAll(`[data-message-author-role="${r}"]`).length, role).catch(() => 0);
+const assistantCount = (page) => countRole(page, 'assistant');
+const userCount = (page) => countRole(page, 'user');
+
+// True while ChatGPT is generating (a Stop button is showing).
+const isStreaming = (page) => page.evaluate(() =>
+  !!document.querySelector('button[data-testid="stop-button"], button[aria-label*="Stop streaming"], button[aria-label="Stop"]')
+).catch(() => false);
+
+// True while a tool-call approval card is showing (an Allow/Allow once/Always
+// allow button is on the page waiting to be clicked).
+const approvalVisible = (page) => page.evaluate(() => {
+  const els = [...document.querySelectorAll('button, [role="button"]')];
+  return els.some((e) => e.offsetParent !== null &&
+    /^(allow once|always allow|allow)$/i.test((e.innerText || e.textContent || '').trim()));
+}).catch(() => false);
+
+async function clearComposer(page) {
+  await page.click('#prompt-textarea').catch(() => {});
+  await page.keyboard.down('Meta'); await page.keyboard.press('a'); await page.keyboard.up('Meta');
+  await page.keyboard.press('Backspace');
+  await sleep(250);
+}
+
+// Click ChatGPT's send button. Returns the composer state:
+//   'streaming' — a Stop button is showing (the message already sent, model is
+//                 replying). NEVER press again here or we'd click Stop and abort.
+//   'clicked'   — we clicked an enabled send button.
+//   'none'      — no send button (e.g. empty composer); nudge with Enter.
+async function pressSend(page) {
+  const state = await page.evaluate(() => {
+    if (document.querySelector('button[data-testid="stop-button"], button[aria-label*="Stop streaming"], button[aria-label="Stop"]')) return 'streaming';
+    const b = document.querySelector('button[data-testid="send-button"], #composer-submit-button, button[aria-label*="Send"]');
+    if (b && !b.disabled) { b.click(); return 'clicked'; }
+    return 'none';
+  }).catch(() => 'none');
+  if (state === 'none') await page.keyboard.press('Enter');
+  return state;
+}
+
+async function sendPrompt(page, text) {
+  const beforeA = await assistantCount(page);
+  const beforeU = await userCount(page);
+  await clearComposer(page);
+  await page.click('#prompt-textarea').catch(() => {});
+  await page.type('#prompt-textarea', text, { delay: 16 });
+  await sleep(500);
+  // Submit and VERIFY the user message actually posted before doing anything else
+  // (Enter alone is flaky and causes the next prompt to concatenate into this one).
+  let submitted = false;
+  for (let i = 0; i < 6 && !submitted; i++) {
+    const st = await pressSend(page);
+    if (st === 'streaming') { submitted = true; break; } // already sent + replying; don't press again (would hit Stop)
+    await sleep(1300);
+    if ((await userCount(page)) > beforeU) submitted = true;
+  }
+  log(`sent(${submitted ? 'ok' : 'UNCONFIRMED'}): ${text}`);
+  // Some tool calls prompt one or more in-chat approval cards. Keep clicking
+  // 'Allow once' / 'Always allow' / 'Allow' as they appear, and only stop once
+  // no approval card remains AND streaming has finished — so the capture never
+  // cuts off on a pending permission prompt or mid-answer.
+  const start = Date.now();
+  while (Date.now() - start < 90000) {
+    const hit = await clickIfPresent(page, ['Allow once', 'Always allow', 'Allow', 'Confirm', 'Approve']);
+    if (hit) { log(`clicked "${hit}"`); await sleep(1200); continue; }
+    const cardGone = !(await approvalVisible(page));
+    const gotReply = (await assistantCount(page)) > beforeA;
+    const streaming = await isStreaming(page);
+    if (cardGone && gotReply && !streaming) break;
+    await sleep(1500);
+  }
+  await waitDoneStreaming(page);
+  await sleep(2500); // hold on the finished reply
+}
+
+// After a reply starts, ChatGPT shows a Stop button while it streams. Wait until
+// generation finishes (Stop gone / composer back to a send state) so the capture
+// never cuts off mid-answer.
+async function waitDoneStreaming(page) {
+  const start = Date.now();
+  await sleep(1500);
+  while (Date.now() - start < 45000) {
+    if (!(await isStreaming(page))) return;
+    await sleep(1000);
+  }
+}
+
+async function main() {
+  fs.rmSync(FRAME_DIR, { recursive: true, force: true });
+  fs.mkdirSync(FRAME_DIR, { recursive: true });
+
+  const browser = await puppeteer.connect({ browserURL: CDP, defaultViewport: null });
+  log('connected to Chrome');
+  const page = await getChatPage(browser);
+
+  // Screenshot loop (concurrent with the prompt arc).
+  let running = true;
+  let n = 0;
+  const loop = (async () => {
+    while (running) {
+      const t = Date.now();
+      const file = path.join(FRAME_DIR, `frame-${String(n).padStart(5, '0')}.png`);
+      try { await page.screenshot({ path: file }); n += 1; } catch {}
+      const dt = Date.now() - t;
+      if (dt < INTERVAL) await sleep(INTERVAL - dt);
+    }
+  })();
+
+  await sleep(1200); // a beat of the empty composer at the start
+  for (const p of PROMPTS) await sendPrompt(page, p);
+  await sleep(2500); // hold on the final reply
+
+  running = false;
+  await loop;
+  browser.disconnect();
+  log(`captured ${n} frames -> ${FRAME_DIR}`);
+
+  // Encode.
+  const args = [
+    '-y', '-framerate', String(FPS), '-i', path.join(FRAME_DIR, 'frame-%05d.png'),
+    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+    '-movflags', '+faststart', OUT,
+  ];
+  log(`ffmpeg encode -> ${OUT}`);
+  const r = spawnSync('ffmpeg', args, { encoding: 'utf8' });
+  if (r.status !== 0) { console.error(r.stderr?.slice(-800)); process.exit(1); }
+  const bytes = fs.statSync(OUT).size;
+  log(`DONE: ${OUT} (${(bytes / 1e6).toFixed(1)} MB, ${n} frames @ ${FPS}fps)`);
+}
+
+main().catch((e) => { console.error('fatal:', e.message); process.exit(1); });

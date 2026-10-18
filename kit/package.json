@@ -1,0 +1,20 @@
+{
+  "name": "etsyops-connector-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Registers the EtsyOps MCP connector in ChatGPT via the persistent agent Chrome profile (CDP :9222), completes the EtsyOps OAuth popup, and screenshots proof.",
+  "scripts": {
+    "register": "node register-connector.mjs",
+    "preflight": "PREFLIGHT_ONLY=1 node register-connector.mjs",
+    "chat-test": "CHAT_TEST=1 node register-connector.mjs",
+    "etsy-app": "node etsy-app-setup.mjs",
+    "connect-shop": "node connect-shop.mjs",
+    "record": "node record-demo.mjs",
+    "upload": "node upload-youtube2.mjs",
+    "submit": "CONFIG_FILE=etsyops.openai.config.json node submit-plugin.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.0.0"
+  }
+}

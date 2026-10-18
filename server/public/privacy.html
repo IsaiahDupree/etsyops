@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — EtsyOps</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --text:#e8eaf0; --muted:#9aa1af; --accent:#f5b942; --border:#2a2f3a; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); display:flex; justify-content:center; padding:40px 16px; }
+  main { max-width:720px; width:100%; line-height:1.65; }
+  h1 { font-size:26px; margin-bottom:4px; } h1 span{color:var(--accent);}
+  h2 { font-size:17px; margin:26px 0 8px; }
+  p, li { color:var(--muted); font-size:15px; margin-bottom:10px; }
+  ul { padding-left:20px; }
+  b { color:var(--text); }
+  .updated { font-size:13px; color:var(--muted); margin-bottom:22px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Etsy<span>Ops</span> Privacy Policy</h1>
+  <p class="updated">Last updated: July 19, 2026</p>
+
+  <p>EtsyOps is an AI Etsy shop operator: a hosted connector that lets an AI assistant (such as ChatGPT, Claude, or Codex) audit your Etsy listings, generate SEO-ready titles, tags, and descriptions, analyze your shop's performance and reviews, draft customer replies, and — on paid plans — create and update listings on your behalf, all over the official <b>Etsy Open API v3</b>. EtsyOps connects only to the one Etsy shop you authorize, with your permission, and only ever touches that shop — nothing else on your computer or your other accounts. EtsyOps is operated by Dupree Ops LLC.</p>
+
+  <h2>Data we collect and why</h2>
+  <ul>
+    <li><b>Account data:</b> your email address, a salted, hashed password (scrypt), and your plan/subscription status (Free, Seller, Growth, or Agency). Used solely to operate your account and apply your plan. We never store plaintext passwords.</li>
+    <li><b>OAuth tokens:</b> standard access/refresh tokens so your AI assistant can call EtsyOps on your behalf (refresh tokens rotate on every use), plus the access token for the Etsy shop you connect — held server-side only so EtsyOps can read your shop and, on paid plans, update it. The Etsy token is never exposed to the client.</li>
+    <li><b>Usage counters:</b> the number of audit and content operations you run, so we can enforce plan limits. We do not build behavioral profiles from this.</li>
+    <li><b>Requests in transit:</b> when your assistant asks EtsyOps to audit a listing, generate content, or update your shop, the request and its result pass through our job queue transiently (encrypted Supabase Postgres, in our own project) with a short time-to-live of seconds, and are not logged, indexed, or retained.</li>
+  </ul>
+
+  <h2>What we do NOT do</h2>
+  <ul>
+    <li>No access to your private accounts, files, devices, contacts, email, messages, or anything on your computer beyond the one Etsy shop you explicitly connect — EtsyOps only ever touches that shop's listings, orders, and reviews.</li>
+    <li>No selling or sharing of personal data with third parties for their own purposes.</li>
+    <li>No advertising, tracking, surveillance, or behavioral profiling.</li>
+    <li>No collection or storage of payment card data (Stripe handles card details for billing), health records, or government identifiers.</li>
+  </ul>
+
+  <h2>What data EtsyOps accesses</h2>
+  <p>EtsyOps connects to your <b>own Etsy shop</b>, with your permission, through a one-time Etsy OAuth authorization (scopes: read your listings, shops, and transactions/receipts; and — for paid write features — write listings). It reads your listings, orders, and reviews to audit and improve them. The two write tools only ever create a <b>draft</b> listing or update a listing's fields as edits you review — EtsyOps never auto-publishes. It touches only the single Etsy shop you connect, and nothing else. If no shop is connected (for example, the reviewer demo account), EtsyOps serves a built-in sample shop instead of any real seller's data.</p>
+
+  <h2>Data recipients (subprocessors)</h2>
+  <p>Infrastructure, data, and billing: <b>Vercel</b> (application hosting), <b>Supabase</b> (account records &amp; transient job queue, Postgres), the <b>Etsy Open API v3</b> (accesses your own shop's data — listings, orders, reviews — only with the OAuth token you grant, and only for the shop you connect), <b>Resend</b> (sends the one-time email-address verification message — receives only your email address), and <b>Stripe</b> (payment processor for paid subscriptions — receives your email address and payment details to process billing; we store only the resulting plan status and never see or store your card numbers). Your AI assistant provider (e.g., OpenAI or Anthropic) processes the content you exchange with it under its own privacy policy.</p>
+
+  <h2>Plans &amp; billing</h2>
+  <p>EtsyOps offers a <b>Free</b> tier (5 audit/content operations per month) and paid <b>Seller</b> ($29/month), <b>Growth</b> ($79/month), and <b>Agency</b> ($249/month) subscriptions that unlock listing creation and updates, unlimited audits and content, review mining, listing experiments, multiple shops, and API access. Payments are handled by <b>Stripe</b>; we receive only your resulting plan status and never see or store your card numbers.</p>
+
+  <h2>Retention</h2>
+  <p>Requests in transit: seconds (automatic expiry). Account records, plan status, and usage counters: until you delete your account. Your connected Etsy shop id and OAuth token: until you disconnect the shop or delete your account. OAuth refresh tokens: 90 days or until revoked/rotated.</p>
+
+  <h2>Your rights &amp; deletion</h2>
+  <p>Email us to access or delete your account data at any time. Revoking the EtsyOps connector in your AI assistant immediately severs its ability to call EtsyOps on your behalf, regardless of any tokens outstanding. Disconnecting your Etsy shop revokes EtsyOps's access to it.</p>
+
+  <h2>Security</h2>
+  <p>All traffic is TLS-encrypted. Authentication uses HMAC-signed tokens with PKCE-protected OAuth flows. Your Etsy access token is a server-side secret held in environment/KV only and is never exposed to the client.</p>
+
+  <h2>Trademarks &amp; independence</h2>
+  <p>EtsyOps is an independent tool operated by Dupree Ops LLC and is not affiliated with, endorsed by, or sponsored by Etsy, Inc. "Etsy" is a trademark of Etsy, Inc., used here for identification only.</p>
+
+  <h2>Contact</h2>
+  <p>Dupree Ops LLC · Isaiah Dupree · Questions or requests: <a href="mailto:isaiahdupree33@gmail.com">isaiahdupree33@gmail.com</a> · <a href="/support">Support</a></p>
+</main>
+</body>
+</html>
