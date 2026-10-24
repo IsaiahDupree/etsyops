@@ -6,4 +6,4 @@ A real owner account was created and verified through sign-in and `/api/me`, wit
 
 Validation: existing server unit tests passed (33 EtsyOps, 26 GapRadar); real Supabase temporary-key integration passed value round-trip, counter, FIFO queue, expiry and cleanup. The deployed relay reports version 1.4.0. The migration is checked in for review.
 
-ChatGPT reconnection and provider acceptance remain pending. EtsyOps also reports its Etsy application key is unconfigured, so an authenticated real-shop read is not yet verified. No demo shop output is counted as owner data. No paid plan or research-credit purchase was made.
+ChatGPT reconnection and Refresh tools completed; the installed get_plan tool answered successfully for the owner account. Provider acceptance remains pending. EtsyOps also reports its Etsy application key is unconfigured, so an authenticated real-shop read is not yet verified. No demo shop output is counted as owner data. No paid plan or research-credit purchase was made.
