@@ -1,17 +1,21 @@
 // redis.js — Redis-shaped storage on Supabase Postgres (shared ecosystem project),
 // with an in-memory fallback for local dev/tests. Only the small command surface
 // the app needs: get/set/del/lpush/rpop/expire. Queue semantics are FIFO
-// (lpush + rpop), implemented by the shared nb_* storage RPC functions (all
-// EtsyOps keys are namespaced by prefix so they never collide).
+// (lpush + rpop), implemented by the isolated eo_* storage RPC functions (all
+// etsyops keys are namespaced by prefix so they never collide).
 
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const redisConfigured = !!(SUPA_URL && SUPA_KEY);
+if (process.env.NODE_ENV === 'production' && !redisConfigured) {
+  throw new Error('Persistent storage must be configured in production');
+}
 
 async function rpc(fn, args) {
   const r = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
     method: 'POST',
+    signal: AbortSignal.timeout(10_000),
     headers: {
       'content-type': 'application/json',
       apikey: SUPA_KEY,
@@ -28,13 +32,13 @@ const asString = (v) => (typeof v === 'string' ? v : JSON.stringify(v));
 
 function supabase() {
   return {
-    get: (k) => rpc('nb_get', { p_k: k }),
-    set: (k, v, ttlSec) => rpc('nb_set', { p_k: k, p_v: asString(v), p_ttl_sec: ttlSec ?? null }),
-    del: (k) => rpc('nb_del', { p_k: k }),
-    lpush: (k, v) => rpc('nb_lpush', { p_k: k, p_v: asString(v) }),
-    rpop: (k) => rpc('nb_rpop', { p_k: k }),
-    expire: (k, ttlSec) => rpc('nb_expire', { p_k: k, p_ttl_sec: ttlSec }),
-    incr: (k, ttlSec) => rpc('nb_incr', { p_k: k, p_ttl_sec: ttlSec ?? null }),
+    get: (k) => rpc('eo_get', { p_k: k }),
+    set: (k, v, ttlSec) => rpc('eo_set', { p_k: k, p_v: asString(v), p_ttl_sec: ttlSec ?? null }),
+    del: (k) => rpc('eo_del', { p_k: k }),
+    lpush: (k, v) => rpc('eo_lpush', { p_k: k, p_v: asString(v) }),
+    rpop: (k) => rpc('eo_rpop', { p_k: k }),
+    expire: (k, ttlSec) => rpc('eo_expire', { p_k: k, p_ttl_sec: ttlSec }),
+    incr: (k, ttlSec) => rpc('eo_incr', { p_k: k, p_ttl_sec: ttlSec ?? null }),
   };
 }
 
